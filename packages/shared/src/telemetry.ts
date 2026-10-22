@@ -6,3 +6,5 @@ export type FrictionEvent =
   | { kind: 'INPUT_PARALYSIS'; at: number; idleMs: number };
 
 export const DEFAULT_PARALYSIS_MS = 45_000;
+export const DEFAULT_ABANDON_MS = 10_000;
+export const DEFAULT_OFFSCREEN_PARALYSIS_MS = 300_000;

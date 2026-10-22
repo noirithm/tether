@@ -1,13 +1,13 @@
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
-import { DEFAULT_PARALYSIS_MS, type FrictionEvent } from '@tether/shared';
+import { DEFAULT_ABANDON_MS, DEFAULT_PARALYSIS_MS, type FrictionEvent } from '@tether/shared';
 import { createTelemetrySensor, type TelemetrySensor } from './sensor';
 
 const sensors: TelemetrySensor[] = [];
 
-function setup(paralysisMs?: number) {
+function setup(thresholds: { paralysisMs?: number; abandonMs?: number } = {}) {
   const events: FrictionEvent[] = [];
   const sensor = createTelemetrySensor({
-    paralysisMs,
+    ...thresholds,
     now: () => Date.now(),
     onEvent: (e) => events.push(e),
   });
@@ -70,18 +70,46 @@ describe('createTelemetrySensor', () => {
     el.remove();
   });
 
-  it('flags TAB_ABANDONED immediately when the page is hidden', () => {
+  it('flags TAB_ABANDONED once the tab has stayed hidden long enough', () => {
     const { sensor, events } = setup();
     sensor.start();
     setHidden(true);
+    vi.advanceTimersByTime(DEFAULT_ABANDON_MS - 1);
+    expect(events).toHaveLength(0);
+    vi.advanceTimersByTime(1);
     expect(events).toHaveLength(1);
     expect(events[0]?.kind).toBe('TAB_ABANDONED');
+  });
+
+  it('ignores a quick trip to another tab', () => {
+    const { sensor, events } = setup();
+    sensor.start();
+    setHidden(true);
+    vi.advanceTimersByTime(DEFAULT_ABANDON_MS - 1);
+    setHidden(false);
+    vi.advanceTimersByTime(DEFAULT_PARALYSIS_MS - 1);
+    expect(events).toHaveLength(0);
+  });
+
+  it('starts a fresh idle window when the user comes back', () => {
+    const { sensor, events } = setup();
+    sensor.start();
+    vi.advanceTimersByTime(40_000);
+    setHidden(true);
+    vi.advanceTimersByTime(5_000);
+    setHidden(false);
+    vi.advanceTimersByTime(DEFAULT_PARALYSIS_MS - 1);
+    expect(events).toHaveLength(0);
+    vi.advanceTimersByTime(1);
+    expect(events).toHaveLength(1);
+    expect(events[0]?.kind).toBe('INPUT_PARALYSIS');
   });
 
   it('disarms after the first event', () => {
     const { sensor, events } = setup();
     sensor.start();
     setHidden(true);
+    vi.advanceTimersByTime(DEFAULT_ABANDON_MS);
     vi.advanceTimersByTime(DEFAULT_PARALYSIS_MS * 3);
     expect(events).toHaveLength(1);
     expect(sensor.armed).toBe(false);
@@ -96,6 +124,16 @@ describe('createTelemetrySensor', () => {
     sensor.stop();
     vi.advanceTimersByTime(DEFAULT_PARALYSIS_MS * 2);
     setHidden(true);
+    vi.advanceTimersByTime(DEFAULT_ABANDON_MS * 2);
+    expect(events).toHaveLength(0);
+  });
+
+  it('cancels a pending abandonment when stopped', () => {
+    const { sensor, events } = setup();
+    sensor.start();
+    setHidden(true);
+    sensor.stop();
+    vi.advanceTimersByTime(DEFAULT_ABANDON_MS * 2);
     expect(events).toHaveLength(0);
   });
 
@@ -111,10 +149,17 @@ describe('createTelemetrySensor', () => {
     expect(events[0]?.kind).toBe('INPUT_PARALYSIS');
   });
 
-  it('respects a custom threshold', () => {
-    const { sensor, events } = setup(5_000);
-    sensor.start();
+  it('respects custom thresholds', () => {
+    const idle = setup({ paralysisMs: 5_000 });
+    idle.sensor.start();
     vi.advanceTimersByTime(5_000);
-    expect(events).toHaveLength(1);
+    expect(idle.events).toHaveLength(1);
+
+    const away = setup({ abandonMs: 2_000 });
+    away.sensor.start();
+    setHidden(true);
+    vi.advanceTimersByTime(2_000);
+    expect(away.events).toHaveLength(1);
+    expect(away.events[0]?.kind).toBe('TAB_ABANDONED');
   });
 });

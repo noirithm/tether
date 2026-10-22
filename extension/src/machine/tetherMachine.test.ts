@@ -146,3 +146,52 @@ describe('tetherMachine', () => {
     expect(classify).not.toHaveBeenCalled();
   });
 });
+
+describe('tetherMachine: working away from the screen', () => {
+  it('flags the current step as engaged', () => {
+    const actor = boot();
+    actor.send({ type: 'GOAL.SUBMIT', goal: 'Do the laundry' });
+    expect(actor.getSnapshot().context.engaged).toBe(false);
+
+    actor.send({ type: 'STEP.ENGAGE' });
+    expect(actor.getSnapshot().context.engaged).toBe(true);
+    expect(actor.getSnapshot().matches('EXECUTING')).toBe(true);
+  });
+
+  it('ignores the flag outside EXECUTING', () => {
+    const actor = boot();
+    actor.send({ type: 'STEP.ENGAGE' });
+    expect(actor.getSnapshot().context.engaged).toBe(false);
+  });
+
+  it('keeps the flag after a break, since the user is still on the same step', () => {
+    const actor = boot();
+    actor.send({ type: 'GOAL.SUBMIT', goal: 'Do the laundry' });
+    actor.send({ type: 'STEP.ENGAGE' });
+    actor.send({ type: 'FRICTION.DETECTED', event: pause });
+    actor.send({ type: 'FRICTION.RESUME' });
+
+    expect(actor.getSnapshot().matches('EXECUTING')).toBe(true);
+    expect(actor.getSnapshot().context.engaged).toBe(true);
+  });
+
+  it('clears the flag when a side quest takes over the screen', async () => {
+    const actor = boot();
+    actor.send({ type: 'GOAL.SUBMIT', goal: 'File the tax form' });
+    actor.send({ type: 'STEP.ENGAGE' });
+    actor.send({ type: 'FRICTION.DETECTED', event: pause });
+    actor.send({ type: 'FRICTION.STUCK' });
+    actor.send({ type: 'BLOCKER.SUBMIT', blocker: 'no login' });
+    await waitFor(actor, (snapshot) => snapshot.matches('RESOLVING'));
+
+    expect(actor.getSnapshot().context.engaged).toBe(false);
+  });
+
+  it('clears the flag when the step is finished', () => {
+    const actor = boot();
+    actor.send({ type: 'GOAL.SUBMIT', goal: 'Do the laundry' });
+    actor.send({ type: 'STEP.ENGAGE' });
+    actor.send({ type: 'STEP.DONE' });
+    expect(actor.getSnapshot().context.engaged).toBe(false);
+  });
+});

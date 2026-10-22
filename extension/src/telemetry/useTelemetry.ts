@@ -8,9 +8,16 @@ export interface UseTelemetryOptions {
   // change it to restart the idle clock, e.g. when the step changes
   resetKey?: string | number;
   paralysisMs?: number;
+  abandonMs?: number;
 }
 
-export function useTelemetry({ active, onFriction, resetKey, paralysisMs }: UseTelemetryOptions) {
+export function useTelemetry({
+  active,
+  onFriction,
+  resetKey,
+  paralysisMs,
+  abandonMs,
+}: UseTelemetryOptions) {
   const handler = useRef(onFriction);
   useEffect(() => {
     handler.current = onFriction;
@@ -20,9 +27,10 @@ export function useTelemetry({ active, onFriction, resetKey, paralysisMs }: UseT
     if (!active) return;
     const sensor = createTelemetrySensor({
       paralysisMs,
+      abandonMs,
       onEvent: (event) => handler.current(event),
     });
     sensor.start();
     return () => sensor.stop();
-  }, [active, resetKey, paralysisMs]);
+  }, [active, resetKey, paralysisMs, abandonMs]);
 }

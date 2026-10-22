@@ -1,8 +1,9 @@
-import { DEFAULT_PARALYSIS_MS, type FrictionEvent } from '@tether/shared';
+import { DEFAULT_ABANDON_MS, DEFAULT_PARALYSIS_MS, type FrictionEvent } from '@tether/shared';
 
 export interface TelemetrySensorOptions {
   onEvent: (event: FrictionEvent) => void;
   paralysisMs?: number;
+  abandonMs?: number;
   now?: () => number;
   doc?: Document;
 }
@@ -31,13 +32,15 @@ export function createTelemetrySensor(options: TelemetrySensorOptions): Telemetr
   const {
     onEvent,
     paralysisMs = DEFAULT_PARALYSIS_MS,
+    abandonMs = DEFAULT_ABANDON_MS,
     now = () => performance.now(),
     doc = document,
   } = options;
 
   let armed = false;
   let lastInputAt = 0;
-  let timer: ReturnType<typeof setTimeout> | undefined;
+  let idleTimer: ReturnType<typeof setTimeout> | undefined;
+  let hiddenTimer: ReturnType<typeof setTimeout> | undefined;
 
   function fire(event: FrictionEvent) {
     if (!armed) return;
@@ -46,8 +49,8 @@ export function createTelemetrySensor(options: TelemetrySensorOptions): Telemetr
   }
 
   function schedule(delay: number) {
-    clearTimeout(timer);
-    timer = setTimeout(check, delay);
+    clearTimeout(idleTimer);
+    idleTimer = setTimeout(check, delay);
   }
 
   function check() {
@@ -65,11 +68,15 @@ export function createTelemetrySensor(options: TelemetrySensorOptions): Telemetr
     lastInputAt = now();
   }
 
-  // background tabs throttle timers, so abandonment can't wait on one
+  // A quick look at another tab isn't abandonment, so the tab has to stay
+  // hidden for abandonMs. Hidden pages still run timers, just coarsely
+  // (about once a second), which is plenty for a threshold in seconds.
   function onVisibility() {
     if (doc.hidden) {
-      fire({ kind: 'TAB_ABANDONED', at: Date.now() });
+      clearTimeout(idleTimer);
+      hiddenTimer = setTimeout(() => fire({ kind: 'TAB_ABANDONED', at: Date.now() }), abandonMs);
     } else {
+      clearTimeout(hiddenTimer);
       lastInputAt = now();
       schedule(paralysisMs);
     }
@@ -87,8 +94,10 @@ export function createTelemetrySensor(options: TelemetrySensorOptions): Telemetr
   function stop() {
     if (!armed) return;
     armed = false;
-    clearTimeout(timer);
-    timer = undefined;
+    clearTimeout(idleTimer);
+    clearTimeout(hiddenTimer);
+    idleTimer = undefined;
+    hiddenTimer = undefined;
     for (const type of INPUT_EVENTS) doc.removeEventListener(type, onInput, LISTENER_OPTS);
     doc.removeEventListener('visibilitychange', onVisibility);
   }

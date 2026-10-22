@@ -20,11 +20,14 @@ export interface TetherContext {
   queue: Step[];
   friction: FrictionEvent | null;
   blocker: string;
+  // the user said they're doing the current step away from the screen
+  engaged: boolean;
 }
 
 export type TetherEvent =
   | { type: 'GOAL.SUBMIT'; goal: string }
   | { type: 'STEP.DONE' }
+  | { type: 'STEP.ENGAGE' }
   | { type: 'FRICTION.DETECTED'; event: FrictionEvent }
   | { type: 'FRICTION.RESUME' }
   | { type: 'FRICTION.STUCK' }
@@ -66,7 +69,12 @@ export const tetherMachine = setup({
   actions: {
     startGoal: assign(({ event }) => {
       assertEvent(event, 'GOAL.SUBMIT');
-      return { queue: [makeStep(event.goal.trim())], friction: null, blocker: '' };
+      return {
+        queue: [makeStep(event.goal.trim())],
+        friction: null,
+        blocker: '',
+        engaged: false,
+      };
     }),
     recordFriction: assign(({ event }) => {
       assertEvent(event, 'FRICTION.DETECTED');
@@ -76,11 +84,15 @@ export const tetherMachine = setup({
       assertEvent(event, 'BLOCKER.SUBMIT');
       return { blocker: event.blocker.trim() };
     }),
-    completeStep: assign({ queue: ({ context }) => context.queue.slice(1) }),
+    markEngaged: assign({ engaged: true }),
+    completeStep: assign({
+      queue: ({ context }) => context.queue.slice(1),
+      engaged: false,
+    }),
   },
 }).createMachine({
   id: 'tether',
-  context: { queue: [], friction: null, blocker: '' },
+  context: { queue: [], friction: null, blocker: '', engaged: false },
   initial: 'IDLE',
   states: {
     IDLE: {
@@ -94,6 +106,7 @@ export const tetherMachine = setup({
           { guard: 'isLastStep', target: 'IDLE', actions: 'completeStep' },
           { actions: 'completeStep' },
         ],
+        'STEP.ENGAGE': { actions: 'markEngaged' },
         'FRICTION.DETECTED': { target: 'FRICTION_DETECTED', actions: 'recordFriction' },
       },
     },
@@ -123,16 +136,19 @@ export const tetherMachine = setup({
               currentTask: context.queue[0]?.text ?? '',
               blocker: context.blocker,
             }),
+            // a side quest is a new step, so the "away from the screen" claim doesn't carry over
             onDone: {
               target: '#tether.RESOLVING',
               actions: assign({
                 queue: ({ context, event }) => withSideQuest(context.queue, event.output),
+                engaged: false,
               }),
             },
             onError: {
               target: '#tether.RESOLVING',
               actions: assign({
                 queue: ({ context }) => withSideQuest(context.queue, FALLBACK_CLASSIFICATION),
+                engaged: false,
               }),
             },
           },

@@ -3,6 +3,7 @@ import {
   type Classification,
   type ClassifyRequest,
 } from '@tether/shared';
+import { API_URL } from '../config';
 
 const TIMEOUT_MS = 8_000;
 
@@ -17,7 +18,7 @@ export async function classifyBlocker(
   signal?: AbortSignal,
 ): Promise<Classification> {
   const timeout = AbortSignal.timeout(TIMEOUT_MS);
-  const res = await fetch('/api/classify', {
+  const res = await fetch(`${API_URL}/api/classify`, {
     method: 'POST',
     headers: { 'content-type': 'application/json' },
     body: JSON.stringify(request),

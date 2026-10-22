@@ -1,11 +1,15 @@
 {
   "name": "tether",
   "private": true,
-  "workspaces": ["packages/*", "web"],
+  "workspaces": [
+    "packages/*",
+    "extension"
+  ],
   "scripts": {
-    "dev": "bun --filter web dev",
-    "test": "bun --filter web test",
-    "typecheck": "bun --filter web typecheck"
+    "dev": "bun --filter extension dev",
+    "build": "bun --filter extension build",
+    "test": "bun --filter extension test",
+    "typecheck": "bun --filter extension typecheck"
   },
   "devDependencies": {
     "typescript": "^7.0.2"
