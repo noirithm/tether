@@ -11,6 +11,7 @@
   "dependencies": {
     "@tether/shared": "workspace:*",
     "@xstate/react": "^6.1.0",
+    "motion": "^14.5.0",
     "react": "^19.3.1",
     "react-dom": "^19.3.1",
     "xstate": "^5.33.3"
