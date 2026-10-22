@@ -10,8 +10,10 @@
   },
   "dependencies": {
     "@tether/shared": "workspace:*",
+    "@xstate/react": "^6.1.0",
     "react": "^19.3.1",
-    "react-dom": "^19.3.1"
+    "react-dom": "^19.3.1",
+    "xstate": "^5.33.3"
   },
   "devDependencies": {
     "@types/react": "^19.3.0",
