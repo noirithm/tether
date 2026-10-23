@@ -1,11 +1,27 @@
 import { DEFAULT_ABANDON_MS, DEFAULT_PARALYSIS_MS, type FrictionEvent } from '@tether/shared';
 
+// The part of Document the sensor relies on, so signals can come from elsewhere.
+export interface PageLike {
+  readonly hidden: boolean;
+  addEventListener(
+    type: string,
+    listener: EventListener,
+    options?: AddEventListenerOptions | boolean,
+  ): void;
+  removeEventListener(
+    type: string,
+    listener: EventListener,
+    options?: EventListenerOptions | boolean,
+  ): void;
+}
+
 export interface TelemetrySensorOptions {
   onEvent: (event: FrictionEvent) => void;
   paralysisMs?: number;
-  abandonMs?: number;
+  // null turns abandonment off
+  abandonMs?: number | null;
   now?: () => number;
-  doc?: Document;
+  doc?: PageLike;
 }
 
 export interface TelemetrySensor {
@@ -14,7 +30,7 @@ export interface TelemetrySensor {
   readonly armed: boolean;
 }
 
-const INPUT_EVENTS = [
+export const INPUT_EVENTS = [
   'mousemove',
   'mousedown',
   'keydown',
@@ -68,13 +84,15 @@ export function createTelemetrySensor(options: TelemetrySensorOptions): Telemetr
     lastInputAt = now();
   }
 
-  // A quick look at another tab isn't abandonment, so the tab has to stay
-  // hidden for abandonMs. Hidden pages still run timers, just coarsely
-  // (about once a second), which is plenty for a threshold in seconds.
+  // A quick look elsewhere isn't abandonment, so the page has to stay hidden
+  // for abandonMs. Hidden pages still run timers, just coarsely (about once a
+  // second), which is plenty for a threshold in seconds.
   function onVisibility() {
     if (doc.hidden) {
       clearTimeout(idleTimer);
-      hiddenTimer = setTimeout(() => fire({ kind: 'TAB_ABANDONED', at: Date.now() }), abandonMs);
+      if (abandonMs !== null) {
+        hiddenTimer = setTimeout(() => fire({ kind: 'TAB_ABANDONED', at: Date.now() }), abandonMs);
+      }
     } else {
       clearTimeout(hiddenTimer);
       lastInputAt = now();
