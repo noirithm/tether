@@ -96,7 +96,7 @@ describe('createTelemetrySensor', () => {
     sensor.start();
     vi.advanceTimersByTime(40_000);
     setHidden(true);
-    vi.advanceTimersByTime(5_000);
+    vi.advanceTimersByTime(DEFAULT_ABANDON_MS - 1);
     setHidden(false);
     vi.advanceTimersByTime(DEFAULT_PARALYSIS_MS - 1);
     expect(events).toHaveLength(0);
@@ -161,5 +161,20 @@ describe('createTelemetrySensor', () => {
     vi.advanceTimersByTime(2_000);
     expect(away.events).toHaveLength(1);
     expect(away.events[0]?.kind).toBe('TAB_ABANDONED');
+  });
+});
+
+describe('createTelemetrySensor with a source that anchors', () => {
+  it('lets the source mark where the user is on every start', () => {
+    const anchor = vi.fn();
+    const sensor = createTelemetrySensor({
+      doc: { hidden: false, anchor, addEventListener() {}, removeEventListener() {} },
+      onEvent: () => {},
+    });
+    sensor.start();
+    sensor.stop();
+    sensor.start();
+    sensor.stop();
+    expect(anchor).toHaveBeenCalledTimes(2);
   });
 });

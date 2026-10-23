@@ -3,6 +3,8 @@ import { DEFAULT_ABANDON_MS, DEFAULT_PARALYSIS_MS, type FrictionEvent } from '@t
 // The part of Document the sensor relies on, so signals can come from elsewhere.
 export interface PageLike {
   readonly hidden: boolean;
+  // called every time the sensor starts, so a source can mark where the user is now
+  anchor?(): void;
   addEventListener(
     type: string,
     listener: EventListener,
@@ -50,8 +52,8 @@ export function createTelemetrySensor(options: TelemetrySensorOptions): Telemetr
     paralysisMs = DEFAULT_PARALYSIS_MS,
     abandonMs = DEFAULT_ABANDON_MS,
     now = () => performance.now(),
-    doc = document,
   } = options;
+  const doc: PageLike = options.doc ?? document;
 
   let armed = false;
   let lastInputAt = 0;
@@ -104,6 +106,7 @@ export function createTelemetrySensor(options: TelemetrySensorOptions): Telemetr
     if (armed) return;
     armed = true;
     lastInputAt = now();
+    doc.anchor?.();
     for (const type of INPUT_EVENTS) doc.addEventListener(type, onInput, LISTENER_OPTS);
     doc.addEventListener('visibilitychange', onVisibility);
     if (!doc.hidden) schedule(paralysisMs);

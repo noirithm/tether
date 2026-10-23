@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { useMachine } from '@xstate/react';
 import { AnimatePresence, MotionConfig } from 'motion/react';
-import { ABANDON_MS, OFFSCREEN_PARALYSIS_MS, PARALYSIS_MS } from './config';
+import { ABANDON_MS, PARALYSIS_MS } from './config';
 import { tetherMachine } from './machine';
 import { useBrowserSource, useTelemetry } from './telemetry';
 import { BlockerForm } from './ui/BlockerForm';
@@ -14,17 +14,16 @@ export function App() {
   const [snapshot, send] = useMachine(tetherMachine);
   const source = useBrowserSource();
   const step = snapshot.context.queue[0];
-  const { friction, engaged } = snapshot.context;
+  const { friction } = snapshot.context;
   const executing = snapshot.matches('EXECUTING');
 
-  // Changing the window restarts the sensor, so pressing "I'm on it" also resets the idle clock.
-  // While engaged the user may be in another app, so leaving the browser isn't flagged.
+  // a new step id restarts the sensor and its idle clock
   useTelemetry({
     active: executing && source !== undefined,
     source,
     resetKey: step?.id,
-    paralysisMs: engaged ? OFFSCREEN_PARALYSIS_MS : PARALYSIS_MS,
-    abandonMs: engaged ? null : ABANDON_MS,
+    paralysisMs: PARALYSIS_MS,
+    abandonMs: ABANDON_MS,
     onFriction: (event) => send({ type: 'FRICTION.DETECTED', event }),
   });
 
@@ -66,9 +65,7 @@ export function App() {
         key={step.id}
         step={step}
         dimmed={dimmed}
-        engaged={engaged}
         onDone={() => send({ type: 'STEP.DONE' })}
-        onEngage={executing && !engaged ? () => send({ type: 'STEP.ENGAGE' }) : undefined}
       >
         <AnimatePresence mode="wait">{aside}</AnimatePresence>
       </StepView>

@@ -6,14 +6,11 @@ import { Scene } from './Scene';
 interface StepViewProps {
   step: Step;
   dimmed: boolean;
-  engaged: boolean;
   onDone: () => void;
-  // left out when engaging doesn't apply, which hides the button
-  onEngage?: () => void;
   children?: ReactNode;
 }
 
-export function StepView({ step, dimmed, engaged, onDone, onEngage, children }: StepViewProps) {
+export function StepView({ step, dimmed, onDone, children }: StepViewProps) {
   return (
     <Scene>
       <div className="step" data-dimmed={dimmed}>
@@ -23,13 +20,7 @@ export function StepView({ step, dimmed, engaged, onDone, onEngage, children }: 
           <button type="button" disabled={dimmed} onClick={onDone}>
             Done
           </button>
-          {onEngage && (
-            <button type="button" disabled={dimmed} onClick={onEngage}>
-              I'm on it
-            </button>
-          )}
         </div>
-        {engaged && <p className="quiet">Take your time.</p>}
       </div>
       <div className="aside">{children}</div>
     </Scene>
