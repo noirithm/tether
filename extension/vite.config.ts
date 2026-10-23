@@ -13,11 +13,14 @@ export default defineConfig({
       input: {
         sidepanel: entry('./sidepanel.html'),
         background: entry('./src/background.ts'),
+        content: entry('./src/content.ts'),
       },
       output: {
-        // the manifest refers to the background script by name
+        // the manifest refers to these two by name
         entryFileNames: (chunk) =>
-          chunk.name === 'background' ? '[name].js' : 'assets/[name]-[hash].js',
+          chunk.name === 'background' || chunk.name === 'content'
+            ? '[name].js'
+            : 'assets/[name]-[hash].js',
       },
     },
   },
