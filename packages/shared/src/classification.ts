@@ -3,6 +3,7 @@ export const BLOCKER_CATEGORIES = [
   'EMOTIONAL_OVERWHELM',
   'MISSING_KNOWLEDGE',
   'EXTERNAL_DEPENDENCY',
+  'DISTRACTION',
 ] as const;
 export type BlockerCategory = (typeof BLOCKER_CATEGORIES)[number];
 

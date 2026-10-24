@@ -1,9 +1,10 @@
 import { useEffect, type ReactNode } from 'react';
 import { useMachine } from '@xstate/react';
 import { AnimatePresence, MotionConfig } from 'motion/react';
+import { DEFAULT_ABANDON_MS, DEFAULT_PARALYSIS_MS } from '@tether/shared';
 import { ABANDON_MS, PARALYSIS_MS } from './config';
 import { nudge } from './alert';
-import { tetherMachine, type TetherInput } from './machine';
+import { patienceFor, tetherMachine, type TetherInput } from './machine';
 import { saveSession } from './persist';
 import { useBrowserSource, useOllamaStatus, useTelemetry } from './telemetry';
 import { BlockerForm } from './ui/BlockerForm';
@@ -20,6 +21,8 @@ export function App({ saved }: { saved?: TetherInput }) {
   const { queue, friction, engaged, unplannedId } = snapshot.context;
   const step = queue[0];
   const executing = snapshot.matches('EXECUTING');
+  // every "still working" doubles how long the sensor waits on this step
+  const patience = 2 ** patienceFor(snapshot.context);
   const ollama = useOllamaStatus(snapshot.matches({ DIAGNOSING: 'asking' }));
 
   // keep the steps, so closing the panel doesn't lose them
@@ -33,8 +36,8 @@ export function App({ saved }: { saved?: TetherInput }) {
     active: executing && !engaged && source !== undefined,
     source,
     resetKey: step?.id,
-    paralysisMs: PARALYSIS_MS,
-    abandonMs: ABANDON_MS,
+    paralysisMs: (PARALYSIS_MS ?? DEFAULT_PARALYSIS_MS) * patience,
+    abandonMs: (ABANDON_MS ?? DEFAULT_ABANDON_MS) * patience,
     onFriction: (event) => send({ type: 'FRICTION.DETECTED', event }),
   });
 
@@ -57,6 +60,7 @@ export function App({ saved }: { saved?: TetherInput }) {
         <FrictionPrompt
           kind={friction.kind}
           onStuck={() => send({ type: 'FRICTION.STUCK' })}
+          onFine={() => send({ type: 'FRICTION.FINE' })}
           onBreak={() => send({ type: 'FRICTION.RESUME' })}
         />
       </Fade>

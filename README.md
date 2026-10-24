@@ -22,6 +22,8 @@ Type the next small thing and press **Start**, or press **Break it down** to hav
 
 If you're doing a step away from the screen, press **I'm on it**. Tether stops watching until you press **Done**.
 
+If Tether nudges you while you're fine, press **Still working**. It waits twice as long before checking in again on that step, up to eight times as long.
+
 ## What Tether keeps
 
 Your current steps, and whether you pressed **I'm on it**, are saved in this browser's local storage so they survive closing the panel. Finishing your last step clears them. Nothing else is stored, and nothing leaves your computer except the requests to Ollama on `127.0.0.1`.
@@ -43,7 +45,7 @@ bun run typecheck
 
 ### Checking the classifier
 
-With Ollama running, this sends 24 labelled blockers through your local model and prints how often it picks the expected category:
+With Ollama running, this sends 30 labelled blockers through your local model and prints how often it picks the expected category:
 
 ```bash
 bun run --filter @tether/shared eval

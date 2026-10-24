@@ -1,5 +1,12 @@
 import { describe, expect, it } from 'bun:test';
-import { ClassifierError, parseClassification, userMessage } from './classifier';
+import { BLOCKER_CATEGORIES } from './classification';
+import {
+  ClassifierError,
+  classificationSchema,
+  parseClassification,
+  SYSTEM_PROMPT,
+  userMessage,
+} from './classifier';
 
 describe('parseClassification', () => {
   it('accepts a valid answer and tidies the step', () => {
@@ -13,6 +20,13 @@ describe('parseClassification', () => {
       category: 'MISSING_CREDENTIAL',
       suggested_micro_step: 'Open the password manager.',
     });
+  });
+
+  it('accepts every category', () => {
+    for (const category of BLOCKER_CATEGORIES) {
+      const text = JSON.stringify({ category, suggested_micro_step: 'Do one thing.' });
+      expect(parseClassification(text).category).toBe(category);
+    }
   });
 
   it('rejects text that is not JSON', () => {
@@ -38,6 +52,18 @@ describe('parseClassification', () => {
   it('rejects JSON that is not an object', () => {
     expect(() => parseClassification('null')).toThrow(ClassifierError);
     expect(() => parseClassification('42')).toThrow(ClassifierError);
+  });
+});
+
+describe('the prompt and the schema', () => {
+  it('describe every category, so a new one can not be forgotten in the prompt', () => {
+    for (const category of BLOCKER_CATEGORIES) {
+      expect(SYSTEM_PROMPT).toContain(`- ${category}:`);
+    }
+  });
+
+  it('let the model answer with every category', () => {
+    expect(classificationSchema.properties.category.enum).toEqual([...BLOCKER_CATEGORIES]);
   });
 });
 

@@ -6,6 +6,7 @@ export const SIDE_QUEST_LABEL: Record<BlockerCategory, string> = {
   EMOTIONAL_OVERWHELM: 'First, something small',
   MISSING_KNOWLEDGE: 'First, one thing to look up',
   EXTERNAL_DEPENDENCY: 'First, reach out',
+  DISTRACTION: 'First, clear the distraction',
 };
 
 export const FRICTION_LEAD: Record<FrictionKind, string> = {

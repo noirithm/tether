@@ -12,11 +12,16 @@ const STEPS: Record<BlockerCategory, string> = {
   EXTERNAL_DEPENDENCY: 'Write one short message asking for what you are waiting on, then send it.',
   MISSING_KNOWLEDGE: 'Open a new tab and type your question as one plain sentence.',
   EMOTIONAL_OVERWHELM: FALLBACK_CLASSIFICATION.suggested_micro_step,
+  DISTRACTION: 'Close the app or tab that is pulling you away, then press Done.',
 };
 
-// The first rule that matches wins, so the more specific ones come first.
-// This only runs when the local model can't answer, so it stays plain on purpose.
+// The first rule that matches wins. A word naming a distraction is a strong signal, so
+// those come first. This only runs when the local model can't answer, so it stays plain on purpose.
 const RULES: [BlockerCategory, RegExp][] = [
+  [
+    'DISTRACTION',
+    /\b(reels?|tik ?tok|insta(?:gram)?|youtube|scroll\w*|doomscroll\w*|social media|twitter|facebook|reddit|snapchat|netflix|distract\w*|procrastinat\w*|my phone)\b/i,
+  ],
   [
     'MISSING_CREDENTIAL',
     /\b(password|passcode|log ?in|sign ?in|credentials?|api key|token|2fa|permissions?|access|locked out|username)\b/i,

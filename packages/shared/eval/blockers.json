@@ -25,5 +25,12 @@
   { "task": "Submit the grant application", "blocker": "my manager still has to approve it", "category": "EXTERNAL_DEPENDENCY" },
   { "task": "Paint the fence", "blocker": "it's been raining all week and the paint won't dry", "category": "EXTERNAL_DEPENDENCY" },
   { "task": "Ship the feature", "blocker": "the design team hasn't delivered the mockups", "category": "EXTERNAL_DEPENDENCY" },
-  { "task": "Renew my passport", "blocker": "the office said they will email me when it is ready", "category": "EXTERNAL_DEPENDENCY" }
+  { "task": "Renew my passport", "blocker": "the office said they will email me when it is ready", "category": "EXTERNAL_DEPENDENCY" },
+
+  { "task": "Revise module 1", "blocker": "reels", "category": "DISTRACTION" },
+  { "task": "Write the essay", "blocker": "I keep opening YouTube instead", "category": "DISTRACTION" },
+  { "task": "Do the dishes", "blocker": "I got stuck scrolling on my phone", "category": "DISTRACTION" },
+  { "task": "Finish the report", "blocker": "Twitter keeps pulling me away", "category": "DISTRACTION" },
+  { "task": "Study chapter 3", "blocker": "I opened TikTok for a second and lost an hour", "category": "DISTRACTION" },
+  { "task": "Answer my emails", "blocker": "I keep checking Instagram", "category": "DISTRACTION" }
 ]

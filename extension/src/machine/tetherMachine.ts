@@ -28,6 +28,8 @@ export interface TetherContext {
   unplannedId: string | null;
   // the user said they're doing the current step away from the screen
   engaged: boolean;
+  // how often the user answered "still working" on one step; read it with patienceFor
+  patience: { stepId: string; count: number };
 }
 
 // what a session needs to pick up where the last one stopped
@@ -44,9 +46,20 @@ export type TetherEvent =
   | { type: 'STEP.ENGAGE' }
   | { type: 'FRICTION.DETECTED'; event: FrictionEvent }
   | { type: 'FRICTION.RESUME' }
+  | { type: 'FRICTION.FINE' }
   | { type: 'FRICTION.STUCK' }
   | { type: 'BLOCKER.SUBMIT'; blocker: string }
   | { type: 'BLOCKER.CANCEL' };
+
+// Each "still working" doubles how long Tether waits on that step, up to 2^3 = 8 times as long.
+const MAX_PATIENCE = 3;
+
+// how many times the user waved off a nudge on the step that's on screen now.
+// It belongs to one step, so a new step starts again at zero without anything resetting it.
+export function patienceFor({ queue, patience }: TetherContext): number {
+  const current = queue[0];
+  return current !== undefined && current.id === patience.stepId ? patience.count : 0;
+}
 
 // Ids are unique within a session. The stamp keeps them apart from the ids of
 // steps restored from an earlier session, because the id keys the step transition.
@@ -124,6 +137,13 @@ export const tetherMachine = setup({
       assertEvent(event, 'FRICTION.DETECTED');
       return { friction: event.event };
     }),
+    // the nudge was wrong, so wait longer on this step before the next one
+    easeOff: assign(({ context }) => ({
+      patience: {
+        stepId: context.queue[0]?.id ?? '',
+        count: Math.min(patienceFor(context) + 1, MAX_PATIENCE),
+      },
+    })),
     recordBlocker: assign(({ event }) => {
       assertEvent(event, 'BLOCKER.SUBMIT');
       return { blocker: event.blocker.trim() };
@@ -143,6 +163,7 @@ export const tetherMachine = setup({
     goal: '',
     unplannedId: null,
     engaged: input?.engaged ?? false,
+    patience: { stepId: '', count: 0 },
   }),
   initial: 'IDLE',
   states: {
@@ -188,6 +209,7 @@ export const tetherMachine = setup({
     FRICTION_DETECTED: {
       on: {
         'FRICTION.RESUME': { target: 'EXECUTING' },
+        'FRICTION.FINE': { target: 'EXECUTING', actions: 'easeOff' },
         'FRICTION.STUCK': { target: 'DIAGNOSING' },
       },
     },
