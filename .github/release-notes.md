@@ -7,3 +7,7 @@
 5. Pin Tether and click its icon to open the side panel.
 
 Works in Chrome, Chromium, Brave and Edge. Without Ollama it still works, with simple suggestions.
+
+## Just want to look around?
+
+Download `tether-demo-*.zip` instead. It needs no Ollama: answers are canned and the timers are short (nudge after 5 seconds idle, 2 seconds away). It is a preview, not the real model. The other zip is the real thing.

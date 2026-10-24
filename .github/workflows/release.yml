@@ -16,21 +16,28 @@ jobs:
       - run: bun install --frozen-lockfile
       - run: bun run typecheck
       - run: bun run test
-      - run: bun run build
 
-      - name: Match the extension version to the tag
+      - name: Build the real extension
         run: |
+          bun run build
           version="${GITHUB_REF_NAME#v}"
           jq --arg v "$version" '.version = $v' extension/dist/manifest.json > manifest.tmp
           mv manifest.tmp extension/dist/manifest.json
+          cd extension/dist && zip -r "../../tether-${GITHUB_REF_NAME}.zip" .
 
-      - name: Zip the extension
-        run: cd extension/dist && zip -r "../../tether-${GITHUB_REF_NAME}.zip" .
+      - name: Build the demo extension (canned answers, no Ollama, short timers)
+        run: |
+          VITE_DEMO=1 VITE_PARALYSIS_MS=5000 VITE_ABANDON_MS=2000 bun run build
+          version="${GITHUB_REF_NAME#v}"
+          jq --arg v "$version" '.version = $v | .name = "Tether (demo)"' extension/dist/manifest.json > manifest.tmp
+          mv manifest.tmp extension/dist/manifest.json
+          cd extension/dist && zip -r "../../tether-demo-${GITHUB_REF_NAME}.zip" .
 
       - name: Publish the release
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
-          gh release create "$GITHUB_REF_NAME" "tether-${GITHUB_REF_NAME}.zip" \
+          gh release create "$GITHUB_REF_NAME" \
+            "tether-${GITHUB_REF_NAME}.zip" "tether-demo-${GITHUB_REF_NAME}.zip" \
             --title "Tether ${GITHUB_REF_NAME}" \
             --notes-file .github/release-notes.md

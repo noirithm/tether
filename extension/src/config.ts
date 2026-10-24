@@ -12,3 +12,6 @@ export const OLLAMA = {
 //   VITE_PARALYSIS_MS=5000 VITE_ABANDON_MS=2000 bun run dev
 export const PARALYSIS_MS = Number(env.VITE_PARALYSIS_MS) || undefined;
 export const ABANDON_MS = Number(env.VITE_ABANDON_MS) || undefined;
+
+// demo build: canned answers, no Ollama needed (VITE_DEMO=1)
+export const DEMO = env.VITE_DEMO === '1';
