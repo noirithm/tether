@@ -3,13 +3,16 @@
   "private": true,
   "workspaces": [
     "packages/*",
-    "extension"
+    "extension",
+    "server"
   ],
   "scripts": {
-    "dev": "bun --filter extension dev",
+    "dev": "bun --filter '*' dev",
+    "dev:extension": "bun --filter extension dev",
+    "dev:server": "bun --filter server dev",
     "build": "bun --filter extension build",
-    "test": "bun --filter extension test",
-    "typecheck": "bun --filter extension typecheck"
+    "test": "bun --filter '*' test",
+    "typecheck": "bun --filter '*' typecheck"
   },
   "devDependencies": {
     "typescript": "^7.0.2"
