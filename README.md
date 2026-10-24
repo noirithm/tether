@@ -4,7 +4,7 @@
 
 ![ci](https://github.com/noirithm/tether/actions/workflows/ci.yml/badge.svg)
 
-**[Watch the 2-minute demo](<VIDEO_URL>)** · **[Try it in 30 seconds](#try-it-in-30-seconds)** · [How it works](#how-it-works) · [Privacy](#privacy-in-detail)
+**[Watch the 2-minute demo](https://youtu.be/l6_o0JbDHLI)** · **[Try it in 30 seconds](#try-it-in-30-seconds)** · [How it works](#how-it-works) · [Privacy](#privacy-in-detail)
 
 ![Tether side panel](docs/screenshot.png)
 
@@ -108,7 +108,7 @@ The flow is a deterministic XState machine with tests. The model is used at only
 
 ## Classifier accuracy
 
-`llama3.2:3b` on the 30 labelled blockers in `packages/shared/eval/blockers.json`: **93% (93/30)**. Reproduce with `bun run --filter @tether/shared eval`.
+`llama3.2:3b` on the 30 labelled blockers in `packages/shared/eval/blockers.json`: **93% (30/30)**. Reproduce with `bun run --filter @tether/shared eval`.
 
 ## Limitations
 
