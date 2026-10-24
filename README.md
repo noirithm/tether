@@ -4,7 +4,7 @@
 
 ![ci](https://github.com/noirithm/tether/actions/workflows/ci.yml/badge.svg)
 
-**[Watch the 2-minute demo](https://youtu.be/l6_o0JbDHLI)** · **[Try it in 30 seconds](#try-it-in-30-seconds)** · [How it works](#how-it-works) · [Privacy](#privacy-in-detail)
+**[Watch the 3-minute demo](https://youtu.be/l6_o0JbDHLI)** · **[Try it in 30 seconds](#try-it-in-30-seconds)** · [How it works](#how-it-works) · [Privacy](#privacy-in-detail)
 
 ![Tether side panel](docs/screenshot.png)
 
