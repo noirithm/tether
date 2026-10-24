@@ -22,6 +22,8 @@ export interface TelemetrySensorOptions {
   paralysisMs?: number;
   // null turns abandonment off
   abandonMs?: number | null;
+  // set false to keep the current home tab (default true)
+  anchor?: boolean;
   now?: () => number;
   doc?: PageLike;
 }
@@ -51,6 +53,7 @@ export function createTelemetrySensor(options: TelemetrySensorOptions): Telemetr
     onEvent,
     paralysisMs = DEFAULT_PARALYSIS_MS,
     abandonMs = DEFAULT_ABANDON_MS,
+    anchor = true,
     now = () => performance.now(),
   } = options;
   const doc: PageLike = options.doc ?? document;
@@ -106,7 +109,7 @@ export function createTelemetrySensor(options: TelemetrySensorOptions): Telemetr
     if (armed) return;
     armed = true;
     lastInputAt = now();
-    doc.anchor?.();
+    if (anchor) doc.anchor?.();
     for (const type of INPUT_EVENTS) doc.addEventListener(type, onInput, LISTENER_OPTS);
     doc.addEventListener('visibilitychange', onVisibility);
     if (!doc.hidden) schedule(paralysisMs);

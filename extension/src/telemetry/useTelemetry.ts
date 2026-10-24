@@ -23,14 +23,19 @@ export function useTelemetry({
   abandonMs,
 }: UseTelemetryOptions) {
   const handler = useRef(onFriction);
+  const anchoredFor = useRef<string | number | undefined | null>(null);
   useEffect(() => {
     handler.current = onFriction;
   });
 
   useEffect(() => {
     if (!active) return;
+    // only a new step moves the home tab, so coming back from a break keeps it
+    const anchor = anchoredFor.current !== resetKey;
+    anchoredFor.current = resetKey;
     const sensor = createTelemetrySensor({
       doc: source,
+      anchor,
       paralysisMs,
       abandonMs,
       onEvent: (event) => handler.current(event),

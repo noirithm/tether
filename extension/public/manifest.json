@@ -7,7 +7,7 @@
   "action": { "default_title": "Open Tether" },
   "side_panel": { "default_path": "sidepanel.html" },
   "background": { "service_worker": "background.js", "type": "module" },
-  "permissions": ["sidePanel"],
+  "permissions": ["sidePanel", "notifications"],
   "host_permissions": ["http://localhost:8787/*"],
   "content_scripts": [
     {

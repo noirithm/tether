@@ -11,6 +11,8 @@ const ACTIVITY: (typeof INPUT_EVENTS)[number] = 'pointerdown';
 const PANEL = 'panel';
 
 export interface BrowserSource extends PageLike {
+  // while locked, using the panel no longer makes the current tab home
+  lockHome(locked: boolean): void;
   dispose(): void;
 }
 
@@ -30,6 +32,7 @@ export function createBrowserSource(): BrowserSource {
   let activeTab: number | undefined;
   // the tab the user was on when the current step started
   let homeTab: number | undefined;
+  let homeLocked = false;
 
   function pulse() {
     target.dispatchEvent(new Event(ACTIVITY));
@@ -80,7 +83,7 @@ export function createBrowserSource(): BrowserSource {
 
   // using the panel means the user is here, so wherever they are now is home
   function onPanelFocus() {
-    homeTab = activeTab ?? homeTab;
+    if (!homeLocked) homeTab = activeTab ?? homeTab;
     setFocused(PANEL, true);
   }
 
@@ -121,6 +124,9 @@ export function createBrowserSource(): BrowserSource {
       if (away === hidden) return;
       hidden = away;
       target.dispatchEvent(new Event('visibilitychange'));
+    },
+    lockHome(locked) {
+      homeLocked = locked;
     },
     addEventListener: (type, listener, options) =>
       target.addEventListener(type, listener, options),

@@ -1,7 +1,8 @@
-import type { ReactNode } from 'react';
+import { useEffect, type ReactNode } from 'react';
 import { useMachine } from '@xstate/react';
 import { AnimatePresence, MotionConfig } from 'motion/react';
 import { ABANDON_MS, PARALYSIS_MS } from './config';
+import { nudge } from './alert';
 import { tetherMachine } from './machine';
 import { useBrowserSource, useTelemetry } from './telemetry';
 import { BlockerForm } from './ui/BlockerForm';
@@ -28,6 +29,16 @@ export function App() {
   });
 
   const dimmed = snapshot.matches('FRICTION_DETECTED') || snapshot.matches('DIAGNOSING');
+  const inFriction = snapshot.matches('FRICTION_DETECTED');
+  useEffect(() => {
+    if (inFriction) nudge();
+  }, [inFriction]);
+
+  // a break or side quest shouldn't move the tab that counts as the job
+  const holdHome = inFriction || snapshot.matches('DIAGNOSING') || snapshot.matches('RESOLVING');
+  useEffect(() => {
+    source?.lockHome(holdHome);
+  }, [source, holdHome]);
 
   let aside: ReactNode = null;
   if (snapshot.matches('FRICTION_DETECTED') && friction) {
