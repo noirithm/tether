@@ -3,5 +3,6 @@ export type { PageLike, TelemetrySensor, TelemetrySensorOptions } from './sensor
 export { createBrowserSource } from './browserSource';
 export type { BrowserSource } from './browserSource';
 export { useBrowserSource } from './useBrowserSource';
+export { useOllamaStatus } from './useOllamaStatus';
 export { useTelemetry } from './useTelemetry';
 export type { UseTelemetryOptions } from './useTelemetry';

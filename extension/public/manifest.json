@@ -4,16 +4,36 @@
   "version": "0.1.0",
   "description": "One small step at a time, with a gentle check-in when you stall.",
   "minimum_chrome_version": "114",
-  "action": { "default_title": "Open Tether" },
-  "side_panel": { "default_path": "sidepanel.html" },
-  "background": { "service_worker": "background.js", "type": "module" },
-  "permissions": ["sidePanel", "notifications"],
-  "host_permissions": ["http://localhost:8787/*"],
+  "action": {
+    "default_title": "Open Tether"
+  },
+  "side_panel": {
+    "default_path": "sidepanel.html"
+  },
+  "background": {
+    "service_worker": "background.js",
+    "type": "module"
+  },
+  "permissions": [
+    "sidePanel",
+    "notifications",
+    "declarativeNetRequest"
+  ],
+  "host_permissions": [
+    "http://127.0.0.1:11434/*"
+  ],
   "content_scripts": [
     {
-      "matches": ["<all_urls>"],
-      "js": ["content.js"],
+      "matches": [
+        "<all_urls>"
+      ],
+      "js": [
+        "content.js"
+      ],
       "all_frames": true
     }
-  ]
+  ],
+  "icons": {
+    "128": "icon.png"
+  }
 }

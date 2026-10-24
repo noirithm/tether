@@ -7,7 +7,7 @@
     "server"
   ],
   "scripts": {
-    "dev": "bun --filter '*' dev",
+    "dev": "bun --filter extension dev",
     "dev:extension": "bun --filter extension dev",
     "dev:server": "bun --filter server dev",
     "build": "bun --filter extension build",

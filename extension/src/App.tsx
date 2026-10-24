@@ -4,8 +4,9 @@ import { AnimatePresence, MotionConfig } from 'motion/react';
 import { ABANDON_MS, PARALYSIS_MS } from './config';
 import { nudge } from './alert';
 import { tetherMachine } from './machine';
-import { useBrowserSource, useTelemetry } from './telemetry';
+import { useBrowserSource, useOllamaStatus, useTelemetry } from './telemetry';
 import { BlockerForm } from './ui/BlockerForm';
+import { SETUP_HINT } from './ui/copy';
 import { FrictionPrompt } from './ui/FrictionPrompt';
 import { GoalPrompt } from './ui/GoalPrompt';
 import { Fade } from './ui/Scene';
@@ -17,6 +18,7 @@ export function App() {
   const step = snapshot.context.queue[0];
   const { friction } = snapshot.context;
   const executing = snapshot.matches('EXECUTING');
+  const ollama = useOllamaStatus(snapshot.matches({ DIAGNOSING: 'asking' }));
 
   // a new step id restarts the sensor and its idle clock
   useTelemetry({
@@ -57,6 +59,7 @@ export function App() {
         <BlockerForm
           onSubmit={(blocker) => send({ type: 'BLOCKER.SUBMIT', blocker })}
           onCancel={() => send({ type: 'BLOCKER.CANCEL' })}
+          hint={ollama && ollama !== 'ready' ? SETUP_HINT[ollama] : undefined}
         />
       </Fade>
     );
