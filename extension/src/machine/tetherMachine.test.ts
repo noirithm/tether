@@ -123,7 +123,7 @@ describe('tetherMachine', () => {
     });
     const actor = boot(classify);
     getStuck(actor);
-    actor.send({ type: 'BLOCKER.SUBMIT', blocker: 'no login' });
+    actor.send({ type: 'BLOCKER.SUBMIT', blocker: 'it is just hard' });
 
     await waitFor(actor, (snapshot) => snapshot.matches('RESOLVING'));
 

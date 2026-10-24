@@ -1,0 +1,29 @@
+[
+  { "task": "Submit the expense report", "blocker": "I forgot my password for the finance portal", "category": "MISSING_CREDENTIAL" },
+  { "task": "Deploy the site", "blocker": "I don't have permission to use the production server", "category": "MISSING_CREDENTIAL" },
+  { "task": "Pay the electricity bill", "blocker": "the website wants my customer number and I don't have it", "category": "MISSING_CREDENTIAL" },
+  { "task": "Set up the API integration", "blocker": "I never got an API key", "category": "MISSING_CREDENTIAL" },
+  { "task": "Book the doctor appointment", "blocker": "I'm locked out of the patient portal, it sends a code to my old phone", "category": "MISSING_CREDENTIAL" },
+  { "task": "Check the shared folder", "blocker": "nobody gave me access to it", "category": "MISSING_CREDENTIAL" },
+
+  { "task": "Write the thesis introduction", "blocker": "it feels huge and I freeze every time I open the document", "category": "EMOTIONAL_OVERWHELM" },
+  { "task": "Clean the kitchen", "blocker": "it's such a mess that I can't even start", "category": "EMOTIONAL_OVERWHELM" },
+  { "task": "Reply to my landlord", "blocker": "I'm anxious about what to say and keep avoiding it", "category": "EMOTIONAL_OVERWHELM" },
+  { "task": "Do the tax return", "blocker": "it's so boring I can't make myself sit down", "category": "EMOTIONAL_OVERWHELM" },
+  { "task": "Start the presentation", "blocker": "I'm exhausted and it all feels like too much", "category": "EMOTIONAL_OVERWHELM" },
+  { "task": "Call the bank", "blocker": "I dread the phone call and my chest gets tight", "category": "EMOTIONAL_OVERWHELM" },
+
+  { "task": "Set up the router", "blocker": "I don't know which cable goes where", "category": "MISSING_KNOWLEDGE" },
+  { "task": "Fix the failing test", "blocker": "I don't understand what this error message means", "category": "MISSING_KNOWLEDGE" },
+  { "task": "Write the cover letter", "blocker": "I have no idea what to put in the first paragraph", "category": "MISSING_KNOWLEDGE" },
+  { "task": "Register the company", "blocker": "I'm not sure which form I need", "category": "MISSING_KNOWLEDGE" },
+  { "task": "Cook the lentils", "blocker": "I don't know how long they take to boil", "category": "MISSING_KNOWLEDGE" },
+  { "task": "Cite my sources", "blocker": "I don't know how to format references in APA", "category": "MISSING_KNOWLEDGE" },
+
+  { "task": "Finish the report", "blocker": "I'm waiting for Sam to send me the numbers", "category": "EXTERNAL_DEPENDENCY" },
+  { "task": "Move into the new flat", "blocker": "the landlord hasn't confirmed the date yet", "category": "EXTERNAL_DEPENDENCY" },
+  { "task": "Submit the grant application", "blocker": "my manager still has to approve it", "category": "EXTERNAL_DEPENDENCY" },
+  { "task": "Paint the fence", "blocker": "it's been raining all week and the paint won't dry", "category": "EXTERNAL_DEPENDENCY" },
+  { "task": "Ship the feature", "blocker": "the design team hasn't delivered the mockups", "category": "EXTERNAL_DEPENDENCY" },
+  { "task": "Renew my passport", "blocker": "the office said they will email me when it is ready", "category": "EXTERNAL_DEPENDENCY" }
+]

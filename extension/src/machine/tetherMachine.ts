@@ -4,9 +4,11 @@ import type {
   Classification,
   ClassifyRequest,
   FrictionEvent,
+  PlanRequest,
 } from '@tether/shared';
 import { classifyBlocker } from './classifier';
-import { FALLBACK_CLASSIFICATION } from './fallback';
+import { fallbackFor } from './fallback';
+import { planGoal } from './planner';
 
 export interface Step {
   id: string;
@@ -20,12 +22,24 @@ export interface TetherContext {
   queue: Step[];
   friction: FrictionEvent | null;
   blocker: string;
+  // the goal waiting to be broken down
+  goal: string;
+  // the step that stands in for a plan that couldn't be made, so the screen can say so
+  unplannedId: string | null;
   // the user said they're doing the current step away from the screen
   engaged: boolean;
 }
 
+// what a session needs to pick up where the last one stopped
+export interface TetherInput {
+  queue?: Step[];
+  engaged?: boolean;
+}
+
 export type TetherEvent =
   | { type: 'GOAL.SUBMIT'; goal: string }
+  | { type: 'GOAL.BREAKDOWN'; goal: string }
+  | { type: 'PLAN.SKIP' }
   | { type: 'STEP.DONE' }
   | { type: 'STEP.ENGAGE' }
   | { type: 'FRICTION.DETECTED'; event: FrictionEvent }
@@ -34,36 +48,48 @@ export type TetherEvent =
   | { type: 'BLOCKER.SUBMIT'; blocker: string }
   | { type: 'BLOCKER.CANCEL' };
 
-// ids only need to be unique within a session; they key the step transition
+// Ids are unique within a session. The stamp keeps them apart from the ids of
+// steps restored from an earlier session, because the id keys the step transition.
+const session = Date.now().toString(36);
 let sequence = 0;
 function makeStep(text: string, category?: BlockerCategory): Step {
   sequence += 1;
-  return { id: `step-${sequence}`, text, category };
+  return { id: `${session}-${sequence}`, text, category };
 }
 
 function withSideQuest(queue: Step[], classification: Classification): Step[] {
   return [makeStep(classification.suggested_micro_step, classification.category), ...queue];
 }
 
+function stepsFrom(goal: string, texts: readonly string[]): Step[] {
+  const steps = texts.map((text) => makeStep(text));
+  return steps.length > 0 ? steps : [makeStep(goal)];
+}
+
 export const tetherMachine = setup({
   types: {
     context: {} as TetherContext,
     events: {} as TetherEvent,
+    // `| void` is what makes the input optional: xstate drops `undefined` when it infers the type
+    input: {} as TetherInput | void,
   },
   actors: {
     classify: fromPromise<Classification, ClassifyRequest>(({ input, signal }) =>
       classifyBlocker(input, signal),
     ),
+    plan: fromPromise<string[], PlanRequest>(({ input, signal }) => planGoal(input, signal)),
   },
   guards: {
     hasGoal: ({ event }) => {
-      assertEvent(event, 'GOAL.SUBMIT');
+      assertEvent(event, ['GOAL.SUBMIT', 'GOAL.BREAKDOWN']);
       return event.goal.trim() !== '';
     },
     hasBlocker: ({ event }) => {
       assertEvent(event, 'BLOCKER.SUBMIT');
       return event.blocker.trim() !== '';
     },
+    hasQueue: ({ context }) => context.queue.length > 0,
+    startsOnSideQuest: ({ context }) => context.queue[0]?.category !== undefined,
     isLastStep: ({ context }) => context.queue.length <= 1,
   },
   actions: {
@@ -73,8 +99,26 @@ export const tetherMachine = setup({
         queue: [makeStep(event.goal.trim())],
         friction: null,
         blocker: '',
+        unplannedId: null,
         engaged: false,
       };
+    }),
+    recordGoal: assign(({ event }) => {
+      assertEvent(event, 'GOAL.BREAKDOWN');
+      return { goal: event.goal.trim() };
+    }),
+    // the goal as one step, because the user chose to skip the plan
+    startFromGoal: assign(({ context }) => ({
+      queue: [makeStep(context.goal)],
+      friction: null,
+      blocker: '',
+      unplannedId: null,
+      engaged: false,
+    })),
+    // the goal as one step, because the plan couldn't be made
+    startUnplanned: assign(({ context }) => {
+      const step = makeStep(context.goal);
+      return { queue: [step], friction: null, blocker: '', unplannedId: step.id, engaged: false };
     }),
     recordFriction: assign(({ event }) => {
       assertEvent(event, 'FRICTION.DETECTED');
@@ -92,12 +136,43 @@ export const tetherMachine = setup({
   },
 }).createMachine({
   id: 'tether',
-  context: { queue: [], friction: null, blocker: '', engaged: false },
+  context: ({ input }) => ({
+    queue: input?.queue ?? [],
+    friction: null,
+    blocker: '',
+    goal: '',
+    unplannedId: null,
+    engaged: input?.engaged ?? false,
+  }),
   initial: 'IDLE',
   states: {
     IDLE: {
+      // a restored session has steps waiting, so it goes straight back to them
+      always: [
+        { guard: 'startsOnSideQuest', target: 'RESOLVING' },
+        { guard: 'hasQueue', target: 'EXECUTING' },
+      ],
       on: {
         'GOAL.SUBMIT': { guard: 'hasGoal', target: 'EXECUTING', actions: 'startGoal' },
+        'GOAL.BREAKDOWN': { guard: 'hasGoal', target: 'PLANNING', actions: 'recordGoal' },
+      },
+    },
+    PLANNING: {
+      on: { 'PLAN.SKIP': { target: 'EXECUTING', actions: 'startFromGoal' } },
+      invoke: {
+        src: 'plan',
+        input: ({ context }): PlanRequest => ({ goal: context.goal }),
+        onDone: {
+          target: 'EXECUTING',
+          actions: assign({
+            queue: ({ context, event }) => stepsFrom(context.goal, event.output),
+            friction: null,
+            blocker: '',
+            unplannedId: null,
+            engaged: false,
+          }),
+        },
+        onError: { target: 'EXECUTING', actions: 'startUnplanned' },
       },
     },
     EXECUTING: {
@@ -144,10 +219,11 @@ export const tetherMachine = setup({
                 engaged: false,
               }),
             },
+            // the model couldn't answer, so pick a step from what the person wrote
             onError: {
               target: '#tether.RESOLVING',
               actions: assign({
-                queue: ({ context }) => withSideQuest(context.queue, FALLBACK_CLASSIFICATION),
+                queue: ({ context }) => withSideQuest(context.queue, fallbackFor(context.blocker)),
                 engaged: false,
               }),
             },

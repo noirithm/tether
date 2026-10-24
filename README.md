@@ -16,6 +16,16 @@ It works in Chrome, Chromium, Brave and Edge. Tabs that were open before you ins
 
 To update, download the new zip, replace the folder's contents, and press reload on Tether's card.
 
+## Using it
+
+Type the next small thing and press **Start**, or press **Break it down** to have the local model split a bigger goal into a few small steps. If the model can't, you get your goal as a single step.
+
+If you're doing a step away from the screen, press **I'm on it**. Tether stops watching until you press **Done**.
+
+## What Tether keeps
+
+Your current steps, and whether you pressed **I'm on it**, are saved in this browser's local storage so they survive closing the panel. Finishing your last step clears them. Nothing else is stored, and nothing leaves your computer except the requests to Ollama on `127.0.0.1`.
+
 ## If something's off
 
 Tether works without Ollama, with a simple suggestion when you say you're stuck. When you press "I'm stuck", it tells you in plain words if Ollama isn't running or the model hasn't been downloaded.
@@ -30,6 +40,16 @@ bun run typecheck
 ```
 
 `server/` is the same classifier as a small HTTP endpoint (`bun run dev:server`, then `POST /api/classify`). The extension doesn't need it.
+
+### Checking the classifier
+
+With Ollama running, this sends 24 labelled blockers through your local model and prints how often it picks the expected category:
+
+```bash
+bun run --filter @tether/shared eval
+```
+
+Set `OLLAMA_MODEL` to try another model, or `MIN_ACCURACY=0.8` to make it exit with an error below that. The cases are in `packages/shared/eval/blockers.json`; add your own.
 
 ### Publishing a release
 

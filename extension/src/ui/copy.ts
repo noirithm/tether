@@ -13,6 +13,10 @@ export const FRICTION_LEAD: Record<FrictionKind, string> = {
   INPUT_PARALYSIS: 'You paused.',
 };
 
+export const ENGAGED_NOTE = "Take your time. Press Done when you've finished.";
+
+export const PLAN_FAILED_NOTE = "Couldn't break that down, so here's your goal as one step.";
+
 // shown while the local model isn't ready; the suggestion is still a simple one
 export const SETUP_HINT = {
   unreachable:

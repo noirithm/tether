@@ -3,26 +3,34 @@ import { useMachine } from '@xstate/react';
 import { AnimatePresence, MotionConfig } from 'motion/react';
 import { ABANDON_MS, PARALYSIS_MS } from './config';
 import { nudge } from './alert';
-import { tetherMachine } from './machine';
+import { tetherMachine, type TetherInput } from './machine';
+import { saveSession } from './persist';
 import { useBrowserSource, useOllamaStatus, useTelemetry } from './telemetry';
 import { BlockerForm } from './ui/BlockerForm';
-import { SETUP_HINT } from './ui/copy';
+import { PLAN_FAILED_NOTE, SETUP_HINT } from './ui/copy';
 import { FrictionPrompt } from './ui/FrictionPrompt';
 import { GoalPrompt } from './ui/GoalPrompt';
+import { PlanWait } from './ui/PlanWait';
 import { Fade } from './ui/Scene';
 import { StepView } from './ui/StepView';
 
-export function App() {
-  const [snapshot, send] = useMachine(tetherMachine);
+export function App({ saved }: { saved?: TetherInput }) {
+  const [snapshot, send] = useMachine(tetherMachine, { input: saved });
   const source = useBrowserSource();
-  const step = snapshot.context.queue[0];
-  const { friction } = snapshot.context;
+  const { queue, friction, engaged, unplannedId } = snapshot.context;
+  const step = queue[0];
   const executing = snapshot.matches('EXECUTING');
   const ollama = useOllamaStatus(snapshot.matches({ DIAGNOSING: 'asking' }));
 
-  // a new step id restarts the sensor and its idle clock
+  // keep the steps, so closing the panel doesn't lose them
+  useEffect(() => {
+    void saveSession(queue, engaged);
+  }, [queue, engaged]);
+
+  // A new step id restarts the sensor and its idle clock. Once the user says they're
+  // doing the step away from the screen, the sensor stays off until the step is done.
   useTelemetry({
-    active: executing && source !== undefined,
+    active: executing && !engaged && source !== undefined,
     source,
     resetKey: step?.id,
     paralysisMs: PARALYSIS_MS,
@@ -66,24 +74,47 @@ export function App() {
   } else if (snapshot.matches({ DIAGNOSING: 'classifying' })) {
     aside = (
       <Fade key="wait">
-        <p className="quiet">One moment...</p>
+        <div className="aside-block">
+          <p className="quiet" role="status">
+            One moment...
+          </p>
+          <div className="actions">
+            <button type="button" onClick={() => send({ type: 'BLOCKER.CANCEL' })}>
+              Never mind
+            </button>
+          </div>
+        </div>
       </Fade>
     );
   }
 
-  const scene =
-    snapshot.matches('IDLE') || !step ? (
-      <GoalPrompt key="idle" onSubmit={(goal) => send({ type: 'GOAL.SUBMIT', goal })} />
-    ) : (
+  let scene: ReactNode;
+  if (snapshot.matches('PLANNING')) {
+    scene = <PlanWait key="plan" onSkip={() => send({ type: 'PLAN.SKIP' })} />;
+  } else if (snapshot.matches('IDLE') || !step) {
+    scene = (
+      <GoalPrompt
+        key="idle"
+        onSubmit={(goal) => send({ type: 'GOAL.SUBMIT', goal })}
+        onBreakdown={(goal) => send({ type: 'GOAL.BREAKDOWN', goal })}
+      />
+    );
+  } else {
+    scene = (
       <StepView
         key={step.id}
         step={step}
         dimmed={dimmed}
+        engaged={executing && engaged}
+        canEngage={executing && !engaged}
+        note={step.id === unplannedId ? PLAN_FAILED_NOTE : undefined}
         onDone={() => send({ type: 'STEP.DONE' })}
+        onEngage={() => send({ type: 'STEP.ENGAGE' })}
       >
         <AnimatePresence mode="wait">{aside}</AnimatePresence>
       </StepView>
     );
+  }
 
   return (
     <MotionConfig reducedMotion="user">

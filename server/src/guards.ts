@@ -37,7 +37,7 @@ export function createRateLimiter({ limit, windowMs, now = Date.now }: Options):
 }
 
 // Requests without an Origin (curl, the tests) pass. A browser page on any other
-// site is turned away, so a stranger's web page can't spend this server's API key.
+// site is turned away, so a stranger's web page can't use this server.
 export function isAllowedOrigin(origin: string | undefined, extra: readonly string[] = []): boolean {
   if (!origin) return true;
   return origin.startsWith('chrome-extension://') || extra.includes(origin);
